@@ -21,6 +21,8 @@ from ferramentas import (
     calcular_saldo,
     remover_duplicatas,
     converter_maiusculas,
+    estatisticas_serie,
+    gerar_grafico,
 )
 
 MODELO = "claude-sonnet-5"
@@ -89,6 +91,51 @@ FERRAMENTAS = [
             "required": ["texto"],
         },
     },
+    {
+        "name": "estatisticas_serie",
+        "description": (
+            "Calcula estatísticas descritivas (média, mediana, desvio padrão, "
+            "mínimo e máximo) de uma série de números, como preços de uma ação "
+            "ao longo de vários dias."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "valores": {
+                    "type": "string",
+                    "description": "Números separados por vírgula, ex: '32,34,31,36,40'",
+                }
+            },
+            "required": ["valores"],
+        },
+    },
+    {
+        "name": "gerar_grafico",
+        "description": (
+            "Gera um gráfico (de linha ou de barra) a partir de uma série de "
+            "números e salva como imagem PNG. Útil para visualizar a evolução "
+            "de preços ou saldos ao longo do tempo."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "valores": {
+                    "type": "string",
+                    "description": "Números separados por vírgula, ex: '32,34,31,36,40'",
+                },
+                "tipo": {
+                    "type": "string",
+                    "enum": ["linha", "barra"],
+                    "description": "Tipo de gráfico. Padrão: 'linha'.",
+                },
+                "titulo": {
+                    "type": "string",
+                    "description": "Título do gráfico.",
+                },
+            },
+            "required": ["valores"],
+        },
+    },
 ]
 
 # Liga o nome da ferramenta (que o modelo escolhe) à função Python real
@@ -97,6 +144,10 @@ IMPLEMENTACOES = {
     "calcular_saldo": lambda i: calcular_saldo(i["lancamentos"]),
     "remover_duplicatas": lambda i: remover_duplicatas(i["identificadores"]),
     "converter_maiusculas": lambda i: converter_maiusculas(i["texto"]),
+    "estatisticas_serie": lambda i: estatisticas_serie(i["valores"]),
+    "gerar_grafico": lambda i: gerar_grafico(
+        i["valores"], i.get("tipo", "linha"), i.get("titulo", "Série de valores")
+    ),
 }
 
 
@@ -161,7 +212,9 @@ def main():
     print(' - "A ação abriu a 10 e fechou a 15, como ela se saiu?"')
     print(' - "Calcule o saldo de: R 100.00,D 50.00,R 20.00"')
     print(' - "Remova as transações repetidas: TX1 TX2 TX1 TX3"')
-    print(' - "Deixe este nome em maiúsculas: joao silva"\n')
+    print(' - "Deixe este nome em maiúsculas: joao silva"')
+    print(' - "Quais as estatísticas desses preços: 32,34,31,36,40,38,42?"')
+    print(' - "Gere um gráfico de linha com esses valores: 32,34,31,36,40,38,42"\n')
 
     while True:
         entrada = input("Você: ").strip()

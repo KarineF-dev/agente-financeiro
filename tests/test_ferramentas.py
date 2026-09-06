@@ -14,6 +14,8 @@ from ferramentas import (
     calcular_saldo,
     remover_duplicatas,
     converter_maiusculas,
+    estatisticas_serie,
+    gerar_grafico,
 )
 
 
@@ -75,6 +77,42 @@ class TestConverterMaiusculas(unittest.TestCase):
 
     def test_ja_capitalizado(self):
         self.assertEqual(converter_maiusculas("Lucas"), "LUCAS")
+
+
+class TestEstatisticasSerie(unittest.TestCase):
+    def test_estatisticas_basicas(self):
+        resultado = estatisticas_serie("10,20,30,40,50")
+        self.assertEqual(resultado["quantidade"], 5)
+        self.assertEqual(resultado["media"], 30.0)
+        self.assertEqual(resultado["mediana"], 30.0)
+        self.assertEqual(resultado["minimo"], 10.0)
+        self.assertEqual(resultado["maximo"], 50.0)
+
+    def test_valor_unico(self):
+        resultado = estatisticas_serie("42")
+        self.assertEqual(resultado["quantidade"], 1)
+        self.assertEqual(resultado["desvio_padrao"], 0.0)
+
+    def test_entrada_vazia(self):
+        resultado = estatisticas_serie("")
+        self.assertIn("erro", resultado)
+
+
+class TestGerarGrafico(unittest.TestCase):
+    def test_gera_arquivo_linha(self):
+        caminho = gerar_grafico("10,20,15,30", tipo="linha")
+        self.assertTrue(os.path.exists(caminho))
+        self.assertTrue(caminho.endswith(".png"))
+        os.remove(caminho)
+
+    def test_gera_arquivo_barra(self):
+        caminho = gerar_grafico("5,10,7", tipo="barra")
+        self.assertTrue(os.path.exists(caminho))
+        os.remove(caminho)
+
+    def test_entrada_invalida(self):
+        resultado = gerar_grafico("")
+        self.assertTrue(resultado.startswith("Erro"))
 
 
 if __name__ == "__main__":

@@ -4,8 +4,19 @@ Ferramentas do agente financeiro.
 Cada função aqui é uma "ferramenta" que o agente de IA pode escolher
 chamar, dependendo do que o usuário pedir em linguagem natural.
 São as mesmas lógicas dos desafios resolvidos anteriormente,
-organizadas como funções reutilizáveis.
+organizadas como funções reutilizáveis, mais um par de ferramentas
+de análise de dados (estatísticas e gráficos).
 """
+
+import os
+import statistics
+import uuid
+
+import matplotlib
+matplotlib.use("Agg")  # gera imagem sem precisar de tela/display
+import matplotlib.pyplot as plt
+
+PASTA_GRAFICOS = os.path.join(os.path.dirname(__file__), "..", "graficos")
 
 
 def status_acao(abertura: int, fechamento: int) -> str:
@@ -62,3 +73,70 @@ def converter_maiusculas(texto: str) -> str:
     números, espaços e demais caracteres.
     """
     return texto.upper()
+
+
+def _converter_valores(valores: str) -> list:
+    """Converte uma string 'v1,v2,v3' em uma lista de floats."""
+    return [float(v.strip()) for v in valores.split(",") if v.strip() != ""]
+
+
+def estatisticas_serie(valores: str) -> dict:
+    """
+    Recebe uma série de números separados por vírgula (ex: preços de
+    fechamento dos últimos dias) e retorna estatísticas descritivas:
+    média, mediana, desvio padrão, mínimo e máximo.
+    """
+    numeros = _converter_valores(valores)
+
+    if not numeros:
+        return {"erro": "Nenhum valor numérico foi encontrado na entrada."}
+
+    resultado = {
+        "quantidade": len(numeros),
+        "media": round(statistics.mean(numeros), 2),
+        "mediana": round(statistics.median(numeros), 2),
+        "minimo": min(numeros),
+        "maximo": max(numeros),
+    }
+
+    # desvio padrão exige pelo menos 2 valores
+    if len(numeros) >= 2:
+        resultado["desvio_padrao"] = round(statistics.stdev(numeros), 2)
+    else:
+        resultado["desvio_padrao"] = 0.0
+
+    return resultado
+
+
+def gerar_grafico(valores: str, tipo: str = "linha", titulo: str = "Série de valores") -> str:
+    """
+    Gera um gráfico (linha ou barra) a partir de uma série de números
+    separados por vírgula e salva como imagem PNG. Retorna o caminho
+    do arquivo gerado.
+    """
+    numeros = _converter_valores(valores)
+
+    if not numeros:
+        return "Erro: nenhum valor numérico foi encontrado na entrada."
+
+    os.makedirs(PASTA_GRAFICOS, exist_ok=True)
+    nome_arquivo = f"grafico_{uuid.uuid4().hex[:8]}.png"
+    caminho = os.path.join(PASTA_GRAFICOS, nome_arquivo)
+
+    eixo_x = list(range(1, len(numeros) + 1))
+
+    plt.figure(figsize=(8, 4.5))
+    if tipo == "barra":
+        plt.bar(eixo_x, numeros, color="#4527a0")
+    else:
+        plt.plot(eixo_x, numeros, marker="o", color="#4527a0")
+
+    plt.title(titulo)
+    plt.xlabel("Período")
+    plt.ylabel("Valor")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(caminho)
+    plt.close()
+
+    return caminho

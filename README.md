@@ -8,6 +8,8 @@ linguagem natural e decide sozinho qual ferramenta chamar:
 - **calcular_saldo** — soma receitas e subtrai despesas de um extrato
 - **remover_duplicatas** — limpa identificadores de transação repetidos
 - **converter_maiusculas** — padroniza um nome para maiúsculas
+- **estatisticas_serie** — calcula média, mediana, desvio padrão, mínimo e máximo de uma série de números
+- **gerar_grafico** — gera um gráfico de linha ou barra (PNG) a partir de uma série de números
 
 Cada ferramenta é uma função Python comum (em `src/ferramentas.py`); quem
 decide **quando** e **com quais argumentos** chamar cada uma é o modelo,
@@ -60,7 +62,16 @@ agente-financeiro/
 
    Você: Calcule o saldo de: R 100.00,D 50.00,R 20.00
    Agente: O saldo final é 70.00...
+
+   Você: Quais as estatísticas desses preços: 32,34,31,36,40,38,42?
+   Agente: Média de 36.14, mediana de 36.0, desvio padrão de 4.1...
+
+   Você: Gere um gráfico de linha com esses valores: 32,34,31,36,40,38,42
+   Agente: Gráfico salvo em graficos/grafico_xxxxxxxx.png
    ```
+
+   Os gráficos gerados ficam na pasta `graficos/` (criada automaticamente
+   e ignorada pelo Git).
 
 ## Rodando os testes
 

@@ -16,3 +16,6 @@ __pycache__/
 
 # Sistema
 .DS_Store
+
+# Gráficos gerados pelo agente
+graficos/

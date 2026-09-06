@@ -23,6 +23,9 @@ from ferramentas import (
     converter_maiusculas,
     estatisticas_serie,
     gerar_grafico,
+    inspecionar_csv,
+    analisar_csv,
+    gerar_grafico_csv,
 )
 
 MODELO = "claude-sonnet-5"
@@ -113,8 +116,9 @@ FERRAMENTAS = [
         "name": "gerar_grafico",
         "description": (
             "Gera um gráfico (de linha ou de barra) a partir de uma série de "
-            "números e salva como imagem PNG. Útil para visualizar a evolução "
-            "de preços ou saldos ao longo do tempo."
+            "números digitados diretamente na conversa e salva como imagem PNG. "
+            "Use quando o usuário digitar os valores na mensagem, não quando "
+            "houver um arquivo CSV envolvido."
         ),
         "input_schema": {
             "type": "object",
@@ -136,6 +140,82 @@ FERRAMENTAS = [
             "required": ["valores"],
         },
     },
+    {
+        "name": "inspecionar_csv",
+        "description": (
+            "Lê um arquivo CSV da pasta 'dados/' do projeto e retorna as "
+            "colunas disponíveis, o número de linhas e uma amostra dos "
+            "primeiros registros. Use isso primeiro, antes de analisar_csv "
+            "ou gerar_grafico_csv, se você não souber os nomes das colunas."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "nome_arquivo": {
+                    "type": "string",
+                    "description": "Nome do arquivo CSV, ex: 'acoes_exemplo.csv'",
+                }
+            },
+            "required": ["nome_arquivo"],
+        },
+    },
+    {
+        "name": "analisar_csv",
+        "description": (
+            "Lê um arquivo CSV da pasta 'dados/' e calcula estatísticas "
+            "descritivas (média, mediana, desvio padrão, mínimo, máximo) de "
+            "uma coluna numérica específica."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "nome_arquivo": {
+                    "type": "string",
+                    "description": "Nome do arquivo CSV, ex: 'acoes_exemplo.csv'",
+                },
+                "coluna": {
+                    "type": "string",
+                    "description": "Nome da coluna numérica a ser analisada, ex: 'fechamento'",
+                },
+            },
+            "required": ["nome_arquivo", "coluna"],
+        },
+    },
+    {
+        "name": "gerar_grafico_csv",
+        "description": (
+            "Lê um arquivo CSV da pasta 'dados/' e gera um gráfico (linha ou "
+            "barra) de uma coluna numérica em função de outra coluna (ex: "
+            "preço de fechamento por data). Salva como PNG e retorna o caminho."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "nome_arquivo": {
+                    "type": "string",
+                    "description": "Nome do arquivo CSV, ex: 'acoes_exemplo.csv'",
+                },
+                "coluna_x": {
+                    "type": "string",
+                    "description": "Coluna do eixo X, geralmente uma data, ex: 'data'",
+                },
+                "coluna_y": {
+                    "type": "string",
+                    "description": "Coluna numérica do eixo Y, ex: 'fechamento'",
+                },
+                "tipo": {
+                    "type": "string",
+                    "enum": ["linha", "barra"],
+                    "description": "Tipo de gráfico. Padrão: 'linha'.",
+                },
+                "titulo": {
+                    "type": "string",
+                    "description": "Título do gráfico. Opcional.",
+                },
+            },
+            "required": ["nome_arquivo", "coluna_x", "coluna_y"],
+        },
+    },
 ]
 
 # Liga o nome da ferramenta (que o modelo escolhe) à função Python real
@@ -147,6 +227,12 @@ IMPLEMENTACOES = {
     "estatisticas_serie": lambda i: estatisticas_serie(i["valores"]),
     "gerar_grafico": lambda i: gerar_grafico(
         i["valores"], i.get("tipo", "linha"), i.get("titulo", "Série de valores")
+    ),
+    "inspecionar_csv": lambda i: inspecionar_csv(i["nome_arquivo"]),
+    "analisar_csv": lambda i: analisar_csv(i["nome_arquivo"], i["coluna"]),
+    "gerar_grafico_csv": lambda i: gerar_grafico_csv(
+        i["nome_arquivo"], i["coluna_x"], i["coluna_y"],
+        i.get("tipo", "linha"), i.get("titulo", ""),
     ),
 }
 
@@ -214,7 +300,9 @@ def main():
     print(' - "Remova as transações repetidas: TX1 TX2 TX1 TX3"')
     print(' - "Deixe este nome em maiúsculas: joao silva"')
     print(' - "Quais as estatísticas desses preços: 32,34,31,36,40,38,42?"')
-    print(' - "Gere um gráfico de linha com esses valores: 32,34,31,36,40,38,42"\n')
+    print(' - "O que tem no arquivo acoes_exemplo.csv?"')
+    print(' - "Analise a coluna fechamento do acoes_exemplo.csv"')
+    print(' - "Gere um gráfico de fechamento por data usando acoes_exemplo.csv"\n')
 
     while True:
         entrada = input("Você: ").strip()

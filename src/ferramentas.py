@@ -12,11 +12,13 @@ import os
 import statistics
 import uuid
 
+import pandas as pd
 import matplotlib
 matplotlib.use("Agg")  # gera imagem sem precisar de tela/display
 import matplotlib.pyplot as plt
 
 PASTA_GRAFICOS = os.path.join(os.path.dirname(__file__), "..", "graficos")
+PASTA_DADOS = os.path.join(os.path.dirname(__file__), "..", "dados")
 
 
 def status_acao(abertura: int, fechamento: int) -> str:
@@ -140,3 +142,108 @@ def gerar_grafico(valores: str, tipo: str = "linha", titulo: str = "Série de va
     plt.close()
 
     return caminho
+
+
+def _resolver_caminho_csv(nome_arquivo: str) -> str:
+    """
+    Resolve o caminho de um CSV dentro da pasta 'dados/' do projeto.
+    Aceita tanto o nome do arquivo ('acoes_exemplo.csv') quanto um
+    caminho relativo já apontando para a pasta 'dados/'.
+    """
+    nome_arquivo = os.path.basename(nome_arquivo)  # evita sair da pasta dados/
+    return os.path.join(PASTA_DADOS, nome_arquivo)
+
+
+def inspecionar_csv(nome_arquivo: str) -> dict:
+    """
+    Lê um arquivo CSV da pasta 'dados/' e retorna um resumo: nomes das
+    colunas, quantidade de linhas e uma amostra das 3 primeiras linhas.
+    Útil para o agente descobrir o que existe no arquivo antes de
+    analisar uma coluna específica.
+    """
+    caminho = _resolver_caminho_csv(nome_arquivo)
+
+    if not os.path.exists(caminho):
+        return {"erro": f"Arquivo '{nome_arquivo}' não encontrado na pasta dados/."}
+
+    df = pd.read_csv(caminho)
+
+    return {
+        "colunas": list(df.columns),
+        "linhas": len(df),
+        "amostra": df.head(3).to_dict(orient="records"),
+    }
+
+
+def analisar_csv(nome_arquivo: str, coluna: str) -> dict:
+    """
+    Lê um arquivo CSV da pasta 'dados/' e retorna estatísticas
+    descritivas (média, mediana, desvio padrão, mínimo, máximo) de uma
+    coluna numérica específica.
+    """
+    caminho = _resolver_caminho_csv(nome_arquivo)
+
+    if not os.path.exists(caminho):
+        return {"erro": f"Arquivo '{nome_arquivo}' não encontrado na pasta dados/."}
+
+    df = pd.read_csv(caminho)
+
+    if coluna not in df.columns:
+        return {"erro": f"Coluna '{coluna}' não existe. Colunas disponíveis: {list(df.columns)}"}
+
+    serie = pd.to_numeric(df[coluna], errors="coerce").dropna()
+
+    if serie.empty:
+        return {"erro": f"A coluna '{coluna}' não contém valores numéricos."}
+
+    return {
+        "quantidade": int(serie.count()),
+        "media": round(float(serie.mean()), 2),
+        "mediana": round(float(serie.median()), 2),
+        "desvio_padrao": round(float(serie.std()), 2) if serie.count() >= 2 else 0.0,
+        "minimo": float(serie.min()),
+        "maximo": float(serie.max()),
+    }
+
+
+def gerar_grafico_csv(nome_arquivo: str, coluna_x: str, coluna_y: str,
+                       tipo: str = "linha", titulo: str = "") -> str:
+    """
+    Lê um arquivo CSV da pasta 'dados/' e gera um gráfico (linha ou
+    barra) de uma coluna numérica (coluna_y) em função de outra coluna
+    (coluna_x, geralmente uma data ou índice). Salva como PNG e retorna
+    o caminho do arquivo gerado.
+    """
+    caminho = _resolver_caminho_csv(nome_arquivo)
+
+    if not os.path.exists(caminho):
+        return f"Erro: arquivo '{nome_arquivo}' não encontrado na pasta dados/."
+
+    df = pd.read_csv(caminho)
+
+    for coluna in (coluna_x, coluna_y):
+        if coluna not in df.columns:
+            return f"Erro: coluna '{coluna}' não existe. Colunas disponíveis: {list(df.columns)}"
+
+    os.makedirs(PASTA_GRAFICOS, exist_ok=True)
+    nome_saida = f"grafico_{uuid.uuid4().hex[:8]}.png"
+    caminho_saida = os.path.join(PASTA_GRAFICOS, nome_saida)
+
+    titulo_final = titulo or f"{coluna_y} por {coluna_x}"
+
+    plt.figure(figsize=(8, 4.5))
+    if tipo == "barra":
+        plt.bar(df[coluna_x].astype(str), df[coluna_y], color="#4527a0")
+    else:
+        plt.plot(df[coluna_x].astype(str), df[coluna_y], marker="o", color="#4527a0")
+
+    plt.title(titulo_final)
+    plt.xlabel(coluna_x)
+    plt.ylabel(coluna_y)
+    plt.xticks(rotation=45, ha="right")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(caminho_saida)
+    plt.close()
+
+    return caminho_saida

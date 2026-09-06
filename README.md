@@ -9,7 +9,10 @@ linguagem natural e decide sozinho qual ferramenta chamar:
 - **remover_duplicatas** — limpa identificadores de transação repetidos
 - **converter_maiusculas** — padroniza um nome para maiúsculas
 - **estatisticas_serie** — calcula média, mediana, desvio padrão, mínimo e máximo de uma série de números
-- **gerar_grafico** — gera um gráfico de linha ou barra (PNG) a partir de uma série de números
+- **gerar_grafico** — gera um gráfico de linha ou barra (PNG) a partir de uma série de números digitados na conversa
+- **inspecionar_csv** — lê um CSV da pasta `dados/` e mostra colunas, número de linhas e uma amostra
+- **analisar_csv** — calcula estatísticas descritivas de uma coluna numérica de um CSV
+- **gerar_grafico_csv** — gera um gráfico a partir de duas colunas de um CSV (ex: preço por data)
 
 Cada ferramenta é uma função Python comum (em `src/ferramentas.py`); quem
 decide **quando** e **com quais argumentos** chamar cada uma é o modelo,
@@ -22,6 +25,8 @@ agente-financeiro/
 ├── src/
 │   ├── agente.py        # loop principal do agente (chama a API da Anthropic)
 │   └── ferramentas.py   # as funções que o agente pode executar
+├── dados/
+│   └── acoes_exemplo.csv  # CSV de exemplo para as ferramentas de análise de dados
 ├── tests/
 │   └── test_ferramentas.py
 ├── requirements.txt
@@ -68,10 +73,21 @@ agente-financeiro/
 
    Você: Gere um gráfico de linha com esses valores: 32,34,31,36,40,38,42
    Agente: Gráfico salvo em graficos/grafico_xxxxxxxx.png
+
+   Você: O que tem no arquivo acoes_exemplo.csv?
+   Agente: O arquivo tem 10 linhas e as colunas: data, ticker, abertura, fechamento, volume...
+
+   Você: Analise a coluna fechamento do acoes_exemplo.csv
+   Agente: Média de 34.82, mediana de 34.65, desvio padrão de 1.98...
+
+   Você: Gere um gráfico de fechamento por data usando acoes_exemplo.csv
+   Agente: Gráfico salvo em graficos/grafico_xxxxxxxx.png
    ```
 
    Os gráficos gerados ficam na pasta `graficos/` (criada automaticamente
-   e ignorada pelo Git).
+   e ignorada pelo Git). Para analisar seus próprios dados, basta colocar
+   outro arquivo `.csv` dentro da pasta `dados/` e pedir para o agente
+   inspecioná-lo primeiro.
 
 ## Rodando os testes
 

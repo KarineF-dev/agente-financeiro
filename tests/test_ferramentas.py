@@ -16,7 +16,12 @@ from ferramentas import (
     converter_maiusculas,
     estatisticas_serie,
     gerar_grafico,
+    inspecionar_csv,
+    analisar_csv,
+    gerar_grafico_csv,
 )
+
+CSV_EXEMPLO = "acoes_exemplo.csv"
 
 
 class TestStatusAcao(unittest.TestCase):
@@ -112,6 +117,49 @@ class TestGerarGrafico(unittest.TestCase):
 
     def test_entrada_invalida(self):
         resultado = gerar_grafico("")
+        self.assertTrue(resultado.startswith("Erro"))
+
+
+class TestInspecionarCsv(unittest.TestCase):
+    def test_le_colunas_e_linhas(self):
+        resultado = inspecionar_csv(CSV_EXEMPLO)
+        self.assertEqual(
+            resultado["colunas"],
+            ["data", "ticker", "abertura", "fechamento", "volume"],
+        )
+        self.assertEqual(resultado["linhas"], 10)
+        self.assertEqual(len(resultado["amostra"]), 3)
+
+    def test_arquivo_inexistente(self):
+        resultado = inspecionar_csv("nao_existe.csv")
+        self.assertIn("erro", resultado)
+
+
+class TestAnalisarCsv(unittest.TestCase):
+    def test_coluna_fechamento(self):
+        resultado = analisar_csv(CSV_EXEMPLO, "fechamento")
+        self.assertEqual(resultado["quantidade"], 10)
+        self.assertEqual(resultado["minimo"], 31.90)
+        self.assertEqual(resultado["maximo"], 38.25)
+
+    def test_coluna_inexistente(self):
+        resultado = analisar_csv(CSV_EXEMPLO, "lucro")
+        self.assertIn("erro", resultado)
+
+    def test_arquivo_inexistente(self):
+        resultado = analisar_csv("nao_existe.csv", "fechamento")
+        self.assertIn("erro", resultado)
+
+
+class TestGerarGraficoCsv(unittest.TestCase):
+    def test_gera_arquivo(self):
+        caminho = gerar_grafico_csv(CSV_EXEMPLO, "data", "fechamento")
+        self.assertTrue(os.path.exists(caminho))
+        self.assertTrue(caminho.endswith(".png"))
+        os.remove(caminho)
+
+    def test_coluna_inexistente(self):
+        resultado = gerar_grafico_csv(CSV_EXEMPLO, "data", "lucro")
         self.assertTrue(resultado.startswith("Erro"))
 
 

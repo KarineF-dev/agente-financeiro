@@ -96,29 +96,3 @@ As ferramentas têm testes automatizados, sem precisar de chave de API:
 ```bash
 python -m unittest discover tests -v
 ```
-
-## Como publicar este projeto no GitHub
-
-Se você recebeu este projeto como uma pasta/zip (sem repositório Git
-ainda), os passos são:
-
-1. Crie um repositório vazio no GitHub (sem README, sem .gitignore —
-   já temos os nossos).
-2. Na pasta do projeto, rode:
-   ```bash
-   git init
-   git add .
-   git commit -m "Primeira versão do agente financeiro"
-   git branch -M main
-   git remote add origin https://github.com/SEU_USUARIO/agente-financeiro.git
-   git push -u origin main
-   ```
-3. **Importante:** nunca faça commit da sua chave de API. O `.gitignore`
-   já ignora arquivos `.env`; se você criar um para guardar a chave,
-   ele não sobe para o GitHub.
-
-## Próximos passos possíveis
-
-- Trocar a "conversa por linha de comando" por uma interface web (Flask/FastAPI)
-- Adicionar uma ferramenta real de cotação de ações via API externa
-- Guardar o histórico de conversas em um arquivo ou banco de dados

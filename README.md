@@ -1,98 +1,189 @@
-# Agente Financeiro
+# 💰 Agente Financeiro com IA Generativa
 
-Agente de IA generativa com ferramentas (tool use), construído com a
-[API da Anthropic](https://docs.claude.com). Ele entende pedidos em
-linguagem natural e decide sozinho qual ferramenta chamar:
+Agente financeiro desenvolvido em Python utilizando a API da Anthropic e o conceito de **Tool Use (uso de ferramentas)**.
 
-- **status_acao** — diz se uma ação teve ALTA, BAIXA ou ficou ESTAVEL
-- **calcular_saldo** — soma receitas e subtrai despesas de um extrato
-- **remover_duplicatas** — limpa identificadores de transação repetidos
-- **converter_maiusculas** — padroniza um nome para maiúsculas
-- **estatisticas_serie** — calcula média, mediana, desvio padrão, mínimo e máximo de uma série de números
-- **gerar_grafico** — gera um gráfico de linha ou barra (PNG) a partir de uma série de números digitados na conversa
-- **inspecionar_csv** — lê um CSV da pasta `dados/` e mostra colunas, número de linhas e uma amostra
-- **analisar_csv** — calcula estatísticas descritivas de uma coluna numérica de um CSV
-- **gerar_grafico_csv** — gera um gráfico a partir de duas colunas de um CSV (ex: preço por data)
+O projeto utiliza inteligência artificial generativa para interpretar solicitações em linguagem natural e decidir autonomamente qual ferramenta Python executar para realizar análises e operações financeiras.
 
-Cada ferramenta é uma função Python comum (em `src/ferramentas.py`); quem
-decide **quando** e **com quais argumentos** chamar cada uma é o modelo,
-com base no que você escreve.
+## 🚀 Funcionalidades
 
-## Estrutura do projeto
+O agente possui as seguintes ferramentas:
 
-```
+| Ferramenta | Descrição |
+|---|---|
+| `status_acao` | Identifica se uma ação teve ALTA, BAIXA ou ESTABILIDADE. |
+| `calcular_saldo` | Soma receitas e subtrai despesas de um extrato. |
+| `remover_duplicatas` | Remove identificadores de transações repetidos. |
+| `converter_maiusculas` | Padroniza textos em letras maiúsculas. |
+| `estatisticas_serie` | Calcula média, mediana, desvio padrão, mínimo e máximo. |
+| `gerar_grafico` | Gera gráficos de linha ou barra a partir de séries numéricas. |
+| `inspecionar_csv` | Identifica colunas, quantidade de linhas e amostras de arquivos CSV. |
+| `analisar_csv` | Calcula estatísticas descritivas de colunas numéricas. |
+| `gerar_grafico_csv` | Gera gráficos utilizando dados de arquivos CSV. |
+
+Cada ferramenta é implementada como uma função Python independente, localizada em `src/ferramentas.py`.
+
+O modelo de IA interpreta a solicitação do usuário e decide qual ferramenta utilizar e quais argumentos fornecer.
+
+## 📊 Visualização de dados
+
+Exemplos de gráficos gerados pelo projeto utilizando dados demonstrativos.
+
+### Evolução do Patrimônio
+
+![Evolução do Patrimônio](graficos/evolucao_patrimonio.png)
+
+### Receitas Mensais
+
+![Receitas Mensais](graficos/receitas_mensais.png)
+
+## 🛠️ Tecnologias utilizadas
+
+- Python 3
+- API da Anthropic
+- Inteligência Artificial Generativa
+- Tool Use
+- Matplotlib
+- Pandas (se utilizado nas ferramentas do projeto)
+- Pytest
+- Git e GitHub
+
+## 📁 Estrutura do projeto
+
+```text
 agente-financeiro/
+│
 ├── src/
-│   ├── agente.py        # loop principal do agente (chama a API da Anthropic)
-│   └── ferramentas.py   # as funções que o agente pode executar
+│   ├── __init__.py
+│   ├── agente.py
+│   └── ferramentas.py
+│
 ├── dados/
-│   └── acoes_exemplo.csv  # CSV de exemplo para as ferramentas de análise de dados
+│   └── acoes_exemplo.csv
+│
+├── graficos/
+│   ├── evolucao_patrimonio.png
+│   └── receitas_mensais.png
+│
 ├── tests/
+│   ├── test_agente.py
 │   └── test_ferramentas.py
+│
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
-## Como rodar localmente
+## ⚙️ Como executar localmente
 
-1. Clone o repositório e entre na pasta:
-   ```bash
-   git clone https://github.com/SEU_USUARIO/agente-financeiro.git
-   cd agente-financeiro
-   ```
-
-2. Crie um ambiente virtual e instale as dependências:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate      # no Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-3. Pegue uma chave de API em [console.anthropic.com](https://console.anthropic.com)
-   e defina a variável de ambiente:
-   ```bash
-   export ANTHROPIC_API_KEY="sua_chave_aqui"    # no Windows: set ANTHROPIC_API_KEY=sua_chave_aqui
-   ```
-
-4. Rode o agente:
-   ```bash
-   python src/agente.py
-   ```
-
-5. Converse com ele, por exemplo:
-   ```
-   Você: A ação abriu a 10 e fechou a 15, como ela se saiu?
-   Agente: A ação teve ALTA...
-
-   Você: Calcule o saldo de: R 100.00,D 50.00,R 20.00
-   Agente: O saldo final é 70.00...
-
-   Você: Quais as estatísticas desses preços: 32,34,31,36,40,38,42?
-   Agente: Média de 36.14, mediana de 36.0, desvio padrão de 4.1...
-
-   Você: Gere um gráfico de linha com esses valores: 32,34,31,36,40,38,42
-   Agente: Gráfico salvo em graficos/grafico_xxxxxxxx.png
-
-   Você: O que tem no arquivo acoes_exemplo.csv?
-   Agente: O arquivo tem 10 linhas e as colunas: data, ticker, abertura, fechamento, volume...
-
-   Você: Analise a coluna fechamento do acoes_exemplo.csv
-   Agente: Média de 34.82, mediana de 34.65, desvio padrão de 1.98...
-
-   Você: Gere um gráfico de fechamento por data usando acoes_exemplo.csv
-   Agente: Gráfico salvo em graficos/grafico_xxxxxxxx.png
-   ```
-
-   Os gráficos gerados ficam na pasta `graficos/` (criada automaticamente
-   e ignorada pelo Git). Para analisar seus próprios dados, basta colocar
-   outro arquivo `.csv` dentro da pasta `dados/` e pedir para o agente
-   inspecioná-lo primeiro.
-
-## Rodando os testes
-
-As ferramentas têm testes automatizados, sem precisar de chave de API:
+### 1. Clone o repositório
 
 ```bash
-python -m unittest discover tests -v
+git clone URL_DO_SEU_REPOSITORIO
+cd agente-financeiro
 ```
+
+### 2. Crie um ambiente virtual
+
+```bash
+python -m venv venv
+```
+
+No Windows PowerShell:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+### 3. Instale as dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure a chave da API
+
+Crie uma chave em [Anthropic Console](https://console.anthropic.com/).
+
+No Windows PowerShell, configure a variável de ambiente:
+
+```powershell
+$env:ANTHROPIC_API_KEY="sua_chave_aqui"
+```
+
+**Importante:** nunca compartilhe ou publique sua chave de API no GitHub.
+
+### 5. Execute o agente
+
+```bash
+python -m src.agente
+```
+
+## 💬 Exemplos de utilização
+
+O agente pode interpretar solicitações como:
+
+**Análise de ações**
+
+```text
+Você: A ação abriu a 10 e fechou a 15, como ela se saiu?
+
+Agente: A ação teve ALTA.
+```
+
+**Cálculo financeiro**
+
+```text
+Você: Calcule o saldo de: R 100.00,D 50.00,R 20.00
+
+Agente: O saldo final é 70.00.
+```
+
+**Análise estatística**
+
+```text
+Você: Quais as estatísticas desses preços: 32,34,31,36,40,38,42?
+```
+
+**Geração de gráficos**
+
+```text
+Você: Gere um gráfico de linha com esses valores: 32,34,31,36,40,38,42
+```
+
+**Análise de arquivos CSV**
+
+```text
+Você: O que tem no arquivo acoes_exemplo.csv?
+
+Você: Analise a coluna fechamento do acoes_exemplo.csv
+
+Você: Gere um gráfico de fechamento por data usando acoes_exemplo.csv
+```
+
+Os gráficos são salvos automaticamente na pasta `graficos/`.
+
+Para analisar outros dados, basta adicionar arquivos CSV à pasta `dados/`.
+
+## 🧪 Testes automatizados
+
+O projeto possui testes automatizados utilizando Pytest.
+
+**Resultado atual: 33 testes aprovados.**
+
+Para executar:
+
+```bash
+python -m pytest -v
+```
+
+Os testes validam as funcionalidades sem necessidade de consumir créditos da API da Anthropic.
+
+## 🎯 Objetivo do projeto
+
+Este projeto foi desenvolvido para aplicar conhecimentos de Python, inteligência artificial generativa, integração com APIs, processamento de dados, análise financeira, visualização de informações e testes automatizados.
+
+A proposta é demonstrar como agentes de IA podem utilizar ferramentas programadas para transformar solicitações em linguagem natural em operações práticas e análises estruturadas.
+
+---
+
+**Desenvolvido com Python e IA Generativa.** 💜

@@ -16,19 +16,34 @@ import json
 
 import anthropic
 
-from ferramentas import (
-    status_acao,
-    calcular_saldo,
-    remover_duplicatas,
-    converter_maiusculas,
-    estatisticas_serie,
-    gerar_grafico,
-    inspecionar_csv,
-    analisar_csv,
-    gerar_grafico_csv,
-)
+try:
+    from .ferramentas import (
+        status_acao,
+        calcular_saldo,
+        remover_duplicatas,
+        converter_maiusculas,
+        estatisticas_serie,
+        gerar_grafico,
+        inspecionar_csv,
+        analisar_csv,
+        gerar_grafico_csv,
+    )
+except ImportError:
+    from ferramentas import (
+        status_acao,
+        calcular_saldo,
+        remover_duplicatas,
+        converter_maiusculas,
+        estatisticas_serie,
+        gerar_grafico,
+        inspecionar_csv,
+        analisar_csv,
+        gerar_grafico_csv,
+    )
 
 MODELO = "claude-sonnet-5"
+
+MAX_CICLOS_AGENTE = 8
 
 # Descrição das ferramentas no formato que a API da Anthropic espera.
 # É a partir daqui que o modelo decide QUAL função chamar e com quais
@@ -238,19 +253,20 @@ IMPLEMENTACOES = {
 
 
 def executar_ferramenta(nome: str, entrada: dict):
+    """Executa uma ferramenta registrada no agente."""
     if nome not in IMPLEMENTACOES:
-        return f"Ferramenta desconhecida: {nome}"
-    try:
-        return IMPLEMENTACOES[nome](entrada)
-    except Exception as erro:
-        return f"Erro ao executar {nome}: {erro}"
+        raise ValueError(f"Ferramenta desconhecida: {nome}")
+
+    if not isinstance(entrada, dict):
+        raise ValueError("Os argumentos devem ser um dicionário.")
+
+    return IMPLEMENTACOES[nome](entrada)
 
 
 def conversar(client: anthropic.Anthropic, mensagens: list) -> str:
-    """Envia as mensagens ao modelo e resolve o loop de tool-use até
-    obter uma resposta final em texto."""
+    """Executa o ciclo de tool use com limite e tratamento de erros."""
 
-    while True:
+    for ciclo in range(MAX_CICLOS_AGENTE):
         resposta = client.messages.create(
             model=MODELO,
             max_tokens=1024,
@@ -258,30 +274,68 @@ def conversar(client: anthropic.Anthropic, mensagens: list) -> str:
             messages=mensagens,
         )
 
-        blocos_tool_use = [b for b in resposta.content if b.type == "tool_use"]
+        blocos_tool_use = [
+            bloco for bloco in resposta.content
+            if bloco.type == "tool_use"
+        ]
 
         if not blocos_tool_use:
-            # Não há mais chamadas de ferramenta: essa é a resposta final
-            texto = "".join(b.text for b in resposta.content if b.type == "text")
-            return texto
-
-        # Guarda a resposta do modelo (incluindo os tool_use) no histórico
-        mensagens.append({"role": "assistant", "content": resposta.content})
-
-        # Executa cada ferramenta pedida e devolve o resultado ao modelo
-        resultados = []
-        for bloco in blocos_tool_use:
-            resultado = executar_ferramenta(bloco.name, bloco.input)
-            resultados.append(
-                {
-                    "type": "tool_result",
-                    "tool_use_id": bloco.id,
-                    "content": str(resultado),
-                }
+            return "".join(
+                bloco.text
+                for bloco in resposta.content
+                if bloco.type == "text"
             )
 
-        mensagens.append({"role": "user", "content": resultados})
+        mensagens.append({
+            "role": "assistant",
+            "content": resposta.content,
+        })
 
+        resultados = []
+
+        for bloco in blocos_tool_use:
+            try:
+                resultado = executar_ferramenta(
+                    bloco.name,
+                    bloco.input
+                )
+
+                conteudo = (
+                    resultado
+                    if isinstance(resultado, str)
+                    else json.dumps(
+                        resultado,
+                        ensure_ascii=False,
+                        default=str
+                    )
+                )
+
+                resultados.append({
+                    "type": "tool_result",
+                    "tool_use_id": bloco.id,
+                    "content": conteudo,
+                })
+
+            except Exception as erro:
+                resultados.append({
+                    "type": "tool_result",
+                    "tool_use_id": bloco.id,
+                    "content": (
+                        f"Erro ao executar a ferramenta: "
+                        f"{type(erro).__name__}: {erro}"
+                    ),
+                    "is_error": True,
+                })
+
+        mensagens.append({
+            "role": "user",
+            "content": resultados,
+        })
+
+    return (
+        "Não consegui concluir a solicitação dentro do limite "
+        "de ciclos de execução."
+    )
 
 def main():
     chave = os.environ.get("ANTHROPIC_API_KEY")
